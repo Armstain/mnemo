@@ -35,6 +35,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Mnemo to access your microphone to capture your thoughts."
+        }
+      ],
       "expo-secure-store"
     ],
     "experiments": {

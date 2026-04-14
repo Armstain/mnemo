@@ -11,7 +11,7 @@ export interface ContextDump {
   summary?: {
     leftOff: string;
     nextSteps: string[];
-    resources: string[];
+    resources: { name: string; url: string }[];
   };
 }
 

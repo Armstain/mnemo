@@ -1,54 +1,111 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, SafeAreaView, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { Mic, X, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { MotiView, AnimatePresence } from 'moti';
+import { 
+  useAudioRecorder, 
+  AudioModule, 
+  RecordingPresets, 
+  setAudioModeAsync, 
+  useAudioRecorderState 
+} from 'expo-audio';
+import * as FileSystem from 'expo-file-system';
 import { useContextStore } from '@/hooks/use-context-store';
-import { processVoiceDump } from '@/lib/gemini';
+import { processAudioDump } from '@/lib/gemini';
 import { ZenButton } from '@/components/ZenButton';
 
 export default function DumpScreen() {
   const { addContext } = useContextStore();
-  const [notes, setNotes] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
-  // Simulate live readout
+  // Initialize recorder with HIGH_QUALITY preset
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
+  const isRecording = recorderState.isRecording;
+
   useEffect(() => {
-    let interval: any;
-    if (isRecording) {
-      interval = setInterval(() => {
-        const words = ["reflecting", "gathering", "capturing", "listening", "processing", "noting", "observing"];
-        const randomWord = words[Math.floor(Math.random() * words.length)];
-        setNotes(prev => prev + (prev ? " " : "") + randomWord);
-      }, 700);
-    }
-    return () => clearInterval(interval);
-  }, [isRecording]);
+    (async () => {
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      setHasPermission(status.granted);
+      
+      if (status.granted) {
+        // Configure audio mode for recording
+        await setAudioModeAsync({
+          allowsRecording: true,
+          playsInSilentMode: true,
+        });
+      }
+    })();
+  }, []);
 
-  const handleFinish = async () => {
-    if (!notes.trim()) return;
+  async function startRecording() {
+    try {
+      if (!hasPermission) {
+        const status = await AudioModule.requestRecordingPermissionsAsync();
+        setHasPermission(status.granted);
+        if (!status.granted) {
+          Alert.alert('Permission required', 'Please enable microphone access to record thoughts.');
+          return;
+        }
+      }
+
+      console.log('Starting recording..');
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
+      console.log('Recording started');
+    } catch (err) {
+      console.error('Failed to start recording', err);
+      Alert.alert('Recording Error', 'Could not start the microphone.');
+    }
+  }
+
+  async function stopAndSave() {
+    console.log('Stopping recording..');
     setIsProcessing(true);
     try {
-      const processed = await processVoiceDump(notes);
+      await audioRecorder.stop();
+      const uri = audioRecorder.uri;
+      console.log('Recording stopped and stored at', uri);
+
+      if (!uri) throw new Error('No recording URI found');
+
+      // Read audio file as base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      const processed = await processAudioDump(base64, 'audio/m4a');
+      
       const newCtx = addContext({
         title: processed.title,
         notes: processed.notes,
         links: processed.links,
         summary: processed.summary
       });
+      
       router.replace(`/(tabs)/context?id=${newCtx.id}` as any);
     } catch (e) {
       console.error(e);
+      Alert.alert('Processing Error', 'Failed to analyze your recording. Saving raw entry.');
       const newCtx = addContext({
-        title: "Quick thought",
-        notes: notes,
+        title: "Voice capture",
+        notes: "Failed to process audio, but the recording was captured.",
         links: [],
       });
       router.replace(`/(tabs)/context?id=${newCtx.id}` as any);
     } finally {
       setIsProcessing(false);
     }
+  }
+
+  // Handle cancellation
+  const handleCancel = async () => {
+    if (isRecording) {
+      await audioRecorder.stop();
+    }
+    router.back();
   };
 
   return (
@@ -118,21 +175,16 @@ export default function DumpScreen() {
               {isRecording ? "Listening..." : "Ready to listen"}
             </Text>
             <Text className="font-sans text-sm text-fg-muted text-center mt-2">
-              {isRecording ? "Speak your thoughts freely" : "Tap to start capturing"}
+              {isRecording ? "Speak your thoughts freely" : (!hasPermission ? "Microphone permission required" : "Tap to start capturing")}
             </Text>
           </MotiView>
         </View>
 
-        {/* Transcript Area */}
-        <View className="h-36 rounded-[16px] bg-surface border border-border/50 p-5 mb-8 shadow-soft-sm">
-          <Text className="font-sans-medium text-xs text-fg-muted mb-2 tracking-wide">
-            Transcript
-          </Text>
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-            <Text className="font-sans text-sm text-fg/70 leading-relaxed">
-              {notes || "Your words will appear here..."}
-            </Text>
-          </ScrollView>
+        {/* Visual feedback Area */}
+        <View className="h-36 rounded-[16px] bg-surface border border-border/50 p-5 mb-8 shadow-soft-sm items-center justify-center">
+           <Text className="font-serif text-sm text-fg-muted italic text-center">
+             {isRecording ? "Recording your voice..." : "Capture audio directly for AI processing"}
+           </Text>
         </View>
 
         {/* Actions */}
@@ -140,7 +192,7 @@ export default function DumpScreen() {
           <AnimatePresence>
             {!isRecording ? (
               <ZenButton
-                onPress={() => setIsRecording(true)}
+                onPress={startRecording}
                 title="Start recording"
                 variant="primary"
                 size="lg"
@@ -151,7 +203,7 @@ export default function DumpScreen() {
             ) : (
               <View className="flex-row gap-3">
                 <ZenButton
-                  onPress={() => { setIsRecording(false); setNotes(''); router.back(); }}
+                  onPress={handleCancel}
                   title="Cancel"
                   variant="outline"
                   size="md"
@@ -159,9 +211,9 @@ export default function DumpScreen() {
                   icon={<X size={20} color="#3D3A36" />}
                 />
                 <ZenButton
-                  onPress={handleFinish}
+                  onPress={stopAndSave}
                   disabled={isProcessing}
-                  title={isProcessing ? "Saving..." : "Save"}
+                  title={isProcessing ? "Analyzing..." : "Save"}
                   variant="primary"
                   size="md"
                   className="flex-[2]"
