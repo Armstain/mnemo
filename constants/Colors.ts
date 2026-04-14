@@ -1,19 +1,19 @@
-const tintColorLight = '#0A0A0A';
-const tintColorDark = '#F5B82A';
+const tintColorLight = '#8B9E7E'; // Sage green
+const tintColorDark = '#A3B896';  // Lighter sage for dark mode
 
 export default {
   light: {
-    text: '#0A0A0A',
-    background: '#F5F5F5',
+    text: '#3D3A36',
+    background: '#F5F0EB',
     tint: tintColorLight,
-    tabIconDefault: '#999',
+    tabIconDefault: '#9E9890',
     tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#FFFFFF',
-    background: '#0A0A0A',
+    text: '#E8E4DF',
+    background: '#2A2826',
     tint: tintColorDark,
-    tabIconDefault: '#444',
+    tabIconDefault: '#6B6660',
     tabIconSelected: tintColorDark,
   },
 };

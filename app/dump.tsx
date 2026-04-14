@@ -1,15 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, SafeAreaView, TextInput, ActivityIndicator } from 'react-native';
-import { Mic, X, ArrowRight, ChevronLeft } from 'lucide-react-native';
+import { View, Text, SafeAreaView, ActivityIndicator, ScrollView } from 'react-native';
+import { Mic, X, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { MotiView, AnimatePresence } from 'moti';
 import { useContextStore } from '@/hooks/use-context-store';
 import { processVoiceDump } from '@/lib/gemini';
+import { ZenButton } from '@/components/ZenButton';
 
 export default function DumpScreen() {
   const { addContext } = useContextStore();
   const [notes, setNotes] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Simulate live readout
+  useEffect(() => {
+    let interval: any;
+    if (isRecording) {
+      interval = setInterval(() => {
+        const words = ["reflecting", "gathering", "capturing", "listening", "processing", "noting", "observing"];
+        const randomWord = words[Math.floor(Math.random() * words.length)];
+        setNotes(prev => prev + (prev ? " " : "") + randomWord);
+      }, 700);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
 
   const handleFinish = async () => {
     if (!notes.trim()) return;
@@ -25,9 +40,8 @@ export default function DumpScreen() {
       router.replace(`/(tabs)/context?id=${newCtx.id}` as any);
     } catch (e) {
       console.error(e);
-      // Fallback
       const newCtx = addContext({
-        title: "Quick Dump",
+        title: "Quick thought",
         notes: notes,
         links: [],
       });
@@ -38,70 +52,127 @@ export default function DumpScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg px-5">
-      <View className="flex-1">
-        <View className="flex-row justify-between items-center mb-10 pt-4">
-          <Pressable 
-            onPress={() => router.back()} 
-            hitSlop={20}
-            className="p-3 border-[1.5px] border-fg bg-surface active:translate-x-[1px] active:translate-y-[1px]"
-          >
-            <ChevronLeft size={24} color="#0A0A0A" />
-          </Pressable>
-          <Text className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
-            {"// Preserve_Memory_Buffer"}
+    <View className="flex-1 bg-bg px-6">
+      <SafeAreaView className="flex-1">
+        {/* Header */}
+        <MotiView
+          from={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ type: 'timing', duration: 400 }}
+          className="flex-row justify-between items-center mt-6 mb-8"
+        >
+          <Text className="font-sans-medium text-sm text-fg-muted">
+            {isRecording ? "Listening..." : "Voice capture"}
           </Text>
-        </View>
+          {isRecording && (
+            <MotiView
+              from={{ opacity: 0.4 }}
+              animate={{ opacity: 1 }}
+              transition={{ type: 'timing', duration: 900, loop: true }}
+            >
+              <View className="w-2.5 h-2.5 rounded-full bg-accent-warm" />
+            </MotiView>
+          )}
+        </MotiView>
 
-        <View className="items-center mb-8">
-          <Text className="text-5xl font-black uppercase tracking-tighter mb-4 text-fg text-center leading-tight">
-            Mental{"\n"}Inventory
-          </Text>
-          <Text className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-50 px-2 bg-fg text-bg">{"STREAMS_IN_PROGRESS"}</Text>
-        </View>
-          
-          <View className="mb-6">
-            <Text className="font-mono text-[10px] font-bold uppercase tracking-widest bg-fg text-bg px-2 py-1 self-start mb-2">Primary_Buffer</Text>
-            <View className="flex-1 border-[1.5px] border-fg bg-surface p-5 shadow-hard min-h-[300px]">
-              <TextInput
-                multiline
-                placeholder="> INITIATE RECORDING..."
-                placeholderTextColor="#999"
-                className="flex-1 font-mono text-base text-fg"
-                style={{ textAlignVertical: 'top' }}
-                value={notes}
-                onChangeText={setNotes}
+        {/* Central Mic Area */}
+        <View className="flex-1 items-center justify-center">
+          <View className="relative items-center justify-center">
+            {/* Breathing pulse ring */}
+            {isRecording && (
+              <MotiView
+                from={{ scale: 1, opacity: 0.3 }}
+                animate={{ scale: 1.6, opacity: 0 }}
+                transition={{ type: 'timing', duration: 2200, loop: true, repeatReverse: false }}
+                className="absolute w-44 h-44 rounded-full border-2 border-accent"
               />
-            </View>
+            )}
+            {isRecording && (
+              <MotiView
+                from={{ scale: 1, opacity: 0.2 }}
+                animate={{ scale: 2, opacity: 0 }}
+                transition={{ type: 'timing', duration: 2200, delay: 500, loop: true, repeatReverse: false }}
+                className="absolute w-44 h-44 rounded-full border border-accent"
+              />
+            )}
+
+            <MotiView
+              animate={{
+                scale: isRecording ? 1.05 : 1,
+                backgroundColor: isRecording ? '#8B9E7E' : '#FFFFFF',
+              }}
+              transition={{ type: 'timing', duration: 400 }}
+              className="w-44 h-44 rounded-full items-center justify-center shadow-soft-lg border border-border/30"
+            >
+              <Mic size={56} color={isRecording ? '#FFFFFF' : '#8B9E7E'} strokeWidth={1.5} />
+            </MotiView>
           </View>
 
-        <View className="gap-6 mt-4 mb-4">
-           <Pressable 
-            onPress={() => setIsRecording(!isRecording)}
-            className={`h-24 border-[1.5px] border-fg items-center justify-center flex-row ${isRecording ? 'bg-accent shadow-none translate-x-[2px] translate-y-[2px]' : 'bg-surface shadow-hard'}`}
+          <MotiView
+            from={{ opacity: 0, translateY: 8 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: 'timing', duration: 500, delay: 200 }}
+            className="mt-10"
           >
-            <Mic size={32} color="#0A0A0A" className={isRecording ? 'animate-pulse' : ''} />
-            <Text className="ml-4 font-mono font-black uppercase tracking-widest text-fg text-xl">
-              {isRecording ? 'STOP_INPUT' : 'START_MIC'}
+            <Text className="text-2xl font-serif text-fg text-center">
+              {isRecording ? "Listening..." : "Ready to listen"}
             </Text>
-          </Pressable>
-
-          <Pressable 
-            onPress={handleFinish}
-            disabled={!notes.trim() || isProcessing}
-            className={`h-20 border-[1.5px] border-fg items-center justify-center flex-row ${!notes.trim() || isProcessing ? 'bg-fg/10 opacity-50' : 'bg-fg shadow-hard'}`}
-          >
-            {isProcessing ? (
-              <ActivityIndicator color="#F5B82A" />
-            ) : (
-              <>
-                <Text className="font-mono font-black uppercase tracking-widest text-bg text-lg mr-3">Commit_Save</Text>
-                <ArrowRight size={24} color="#F5B82A" />
-              </>
-            )}
-          </Pressable>
+            <Text className="font-sans text-sm text-fg-muted text-center mt-2">
+              {isRecording ? "Speak your thoughts freely" : "Tap to start capturing"}
+            </Text>
+          </MotiView>
         </View>
-      </View>
-    </SafeAreaView>
+
+        {/* Transcript Area */}
+        <View className="h-36 rounded-[16px] bg-surface border border-border/50 p-5 mb-8 shadow-soft-sm">
+          <Text className="font-sans-medium text-xs text-fg-muted mb-2 tracking-wide">
+            Transcript
+          </Text>
+          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <Text className="font-sans text-sm text-fg/70 leading-relaxed">
+              {notes || "Your words will appear here..."}
+            </Text>
+          </ScrollView>
+        </View>
+
+        {/* Actions */}
+        <View className="gap-3 pb-12">
+          <AnimatePresence>
+            {!isRecording ? (
+              <ZenButton
+                onPress={() => setIsRecording(true)}
+                title="Start recording"
+                variant="primary"
+                size="lg"
+                fullWidth
+                hapticIntensity="medium"
+                icon={<Mic size={22} color="#FFFFFF" />}
+              />
+            ) : (
+              <View className="flex-row gap-3">
+                <ZenButton
+                  onPress={() => { setIsRecording(false); setNotes(''); router.back(); }}
+                  title="Cancel"
+                  variant="outline"
+                  size="md"
+                  className="flex-1"
+                  icon={<X size={20} color="#3D3A36" />}
+                />
+                <ZenButton
+                  onPress={handleFinish}
+                  disabled={isProcessing}
+                  title={isProcessing ? "Saving..." : "Save"}
+                  variant="primary"
+                  size="md"
+                  className="flex-[2]"
+                  hapticIntensity="medium"
+                  icon={isProcessing ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Check size={20} color="#FFFFFF" />}
+                />
+              </View>
+            )}
+          </AnimatePresence>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
