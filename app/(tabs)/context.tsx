@@ -3,7 +3,8 @@ import { View, Text, Pressable, ScrollView, SafeAreaView, ActivityIndicator, Sha
 import { router, useLocalSearchParams } from 'expo-router';
 import { useContextStore } from '@/hooks/use-context-store';
 import { summarizeContext } from '@/lib/gemini';
-import { ChevronLeft, Trash2, Sparkles, ExternalLink, Share2, Clock } from 'lucide-react-native';
+import { ChevronLeft, Trash2, Sparkles, ExternalLink as ExternalLinkIcon, Share2, Clock } from 'lucide-react-native';
+import { ExternalLink } from '@/components/ExternalLink';
 import { formatDistanceToNow } from 'date-fns';
 import { MotiView } from 'moti';
 import { ZenButton } from '@/components/ZenButton';
@@ -210,12 +211,12 @@ export default function ContextDetailScreen() {
                     </Text>
                     <View className="gap-2">
                       {context.summary.resources.map((res, i) => (
-                        <View key={i} className="flex-row items-center justify-between bg-surface rounded-[12px] px-5 py-4 border border-border/40">
+                        <ExternalLink key={i} href={res.url} className="flex-row items-center justify-between bg-surface rounded-[12px] px-5 py-4 border border-border/40">
                           <Text className="font-sans text-sm text-fg flex-1 mr-4" numberOfLines={1}>
-                            {res}
+                            {res.name}
                           </Text>
-                          <ExternalLink size={14} color="#8B9E7E" />
-                        </View>
+                          <ExternalLinkIcon size={14} color="#8B9E7E" />
+                        </ExternalLink>
                       ))}
                     </View>
                   </View>
@@ -247,12 +248,12 @@ export default function ContextDetailScreen() {
                   </Text>
                   <View className="gap-2">
                     {context.links.map((link, i) => (
-                      <Pressable key={i} className="flex-row items-center justify-between rounded-[10px] px-4 py-3 bg-surface border border-border/30 active:opacity-70">
+                      <ExternalLink key={i} href={link} className="flex-row items-center justify-between rounded-[10px] px-4 py-3 bg-surface border border-border/30 active:opacity-70">
                         <Text className="font-sans text-xs text-fg-muted flex-1 mr-4" numberOfLines={1}>
                           {link}
                         </Text>
-                        <ExternalLink size={12} color="#9E9890" />
-                      </Pressable>
+                        <ExternalLinkIcon size={12} color="#9E9890" />
+                      </ExternalLink>
                     ))}
                   </View>
                 </View>
