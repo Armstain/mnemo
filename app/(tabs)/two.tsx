@@ -1,31 +1,23 @@
-import { StyleSheet } from 'react-native';
-
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import { View, Text } from 'react-native';
+import { MotiView } from 'moti';
 
 export default function TabTwoScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab Two</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/two.tsx" />
+    <View className="flex-1 bg-bg items-center justify-center p-8">
+      <MotiView
+        from={{ opacity: 0, translateY: 12 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: 'timing', duration: 500 }}
+        className="items-center"
+      >
+        <Text className="text-4xl mb-4">🍃</Text>
+        <Text className="text-xl font-serif text-fg mb-2">
+          Coming soon
+        </Text>
+        <Text className="font-sans text-sm text-fg-muted text-center leading-relaxed">
+          More features are on the way.
+        </Text>
+      </MotiView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});

@@ -1,141 +1,138 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, SafeAreaView } from 'react-native';
-import { Mic, Search, History, ArrowRight, Trash2 } from 'lucide-react-native';
+import { View, Text, ScrollView, SafeAreaView } from 'react-native';
+import { Mic, PenLine, ChevronRight } from 'lucide-react-native';
 import { useContextStore } from '@/hooks/use-context-store';
 import { formatDistanceToNow } from 'date-fns';
 import { router } from 'expo-router';
 import { MotiView } from 'moti';
+import { ZenButton } from '@/components/ZenButton';
+import { ZenCard } from '@/components/ZenCard';
 
 export default function MnemoDashboard() {
-  const { contexts, deleteContext, isLoaded } = useContextStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { contexts, isLoaded } = useContextStore();
 
   if (!isLoaded) {
     return (
       <View className="flex-1 bg-bg items-center justify-center">
-        <Text className="font-mono text-fg opacity-50 uppercase tracking-widest">[ INITIALIZING ]</Text>
+        <MotiView
+          from={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ type: 'timing', duration: 800 }}
+        >
+          <Text className="font-sans-medium text-sm text-fg-muted tracking-wide">
+            Loading your thoughts...
+          </Text>
+        </MotiView>
       </View>
     );
   }
 
-  const lastContext = contexts[0];
-  const filteredContexts = contexts.filter(c => 
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <SafeAreaView className="flex-1 bg-bg px-5">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className="mb-12 mt-4 items-center">
-          <Text className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent mb-4 px-2 bg-fg">
-            {"INITIALIZATION_COMPLETE"}
-          </Text>
-          <Text className="text-5xl font-black uppercase leading-[0.8] tracking-tighter text-fg text-center">
-            COGNITIVE{"\n"}STATE
-          </Text>
-        </View>
-
-        {/* Action Button */}
-        <MotiView 
-          from={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mb-10"
+    <View className="flex-1 bg-bg">
+      <SafeAreaView className="flex-1">
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 220 }}
         >
-          <Pressable 
-            onPress={() => router.push('/dump' as any)}
-            className="bg-accent border-[1.5px] border-fg p-6 flex-row items-center justify-between shadow-hard active:translate-x-[2px] active:translate-y-[2px] active:shadow-none min-h-[90px]"
+          {/* Greeting */}
+          <MotiView
+            from={{ opacity: 0, translateY: 16 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: 'timing', duration: 600 }}
+            className="mb-12 mt-4"
           >
-            <View className="flex-row items-center">
-              <View className="bg-fg p-3 border-[1.5px] border-fg">
-                <Mic size={24} color="#F5B82A" />
-              </View>
-              <View className="ml-4">
-                <Text className="font-mono text-[10px] font-bold uppercase tracking-widest text-fg opacity-60">
-                   Capture_Brain_Dump
-                </Text>
-                <Text className="text-xl font-black uppercase text-fg">
-                  TRIGGER_MIC
-                </Text>
-              </View>
-            </View>
-            <ArrowRight size={24} color="#0A0A0A" />
-          </Pressable>
-        </MotiView>
-
-        {/* Latest Context Preview */}
-        {lastContext && (
-          <View className="mb-10">
-            <Pressable 
-              onPress={() => router.push(`/(tabs)/context?id=${lastContext.id}` as any)}
-              className="bg-surface border-[1.5px] border-fg p-8 shadow-hard active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-            >
-              <Text className="font-mono text-[10px] font-bold uppercase tracking-widest text-fg opacity-50 mb-3 block">
-                Last Preserved Context
-              </Text>
-              <Text className="text-3xl font-black uppercase mb-3 text-fg leading-none">{lastContext.title}</Text>
-              <Text className="font-mono text-sm text-fg opacity-70 leading-5" numberOfLines={3}>
-                {lastContext.notes}
-              </Text>
-              <View className="mt-8 flex-row justify-between items-center pt-6 border-t-[1.5px] border-fg/10">
-                <Text className="font-mono text-xs font-bold text-accent uppercase">
-                  {formatDistanceToNow(lastContext.createdAt)} ago
-                </Text>
-                <View className="bg-fg px-4 py-2 border-[1.5px] border-fg">
-                  <Text className="font-mono text-[10px] uppercase font-black text-bg">
-                    Restore Now
-                  </Text>
-                </View>
-              </View>
-            </Pressable>
-          </View>
-        )}
-
-        {/* History List */}
-        <View className="mb-10">
-          <View className="flex-row justify-between items-center mb-8 px-1">
-            <Text className="text-4xl font-black uppercase tracking-tighter text-fg">
-              Archive
+            <Text className="font-sans text-sm text-fg-muted mb-3 tracking-wide">
+              Welcome back
             </Text>
-            <History size={24} color="#0A0A0A" />
-          </View>
+            <Text className="text-4xl font-serif text-fg leading-tight">
+              What's on{"\n"}your mind?
+            </Text>
+          </MotiView>
 
-          {filteredContexts.length === 0 ? (
-            <View className="border-dashed border-[1.5px] border-fg opacity-30 p-10 items-center">
-              <Text className="font-mono text-xs uppercase tracking-widest">Memory Banks Empty</Text>
-            </View>
-          ) : (
-            <View className="space-y-4">
-              {filteredContexts.slice(1, 5).map((ctx) => (
-                <Pressable 
-                  key={ctx.id}
-                  className="bg-surface border-[1.5px] border-fg p-5 flex-row items-center justify-between shadow-hard active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-                  onPress={() => router.push(`/(tabs)/context?id=${ctx.id}` as any)}
-                >
-                  <View className="flex-1 mr-4">
-                    <Text className="text-lg font-black uppercase text-fg" numberOfLines={1}>
-                      {ctx.title}
-                    </Text>
-                    <Text className="font-mono text-[10px] text-fg opacity-50 uppercase tracking-widest mt-1">
-                      {formatDistanceToNow(ctx.createdAt)} ago
-                    </Text>
-                  </View>
-                  <ArrowRight size={20} color="#F5B82A" />
-                </Pressable>
-              ))}
-              
-              <Pressable 
-                onPress={() => router.push('/(tabs)/archive' as any)}
-                className="items-center py-6 border-[1.5px] border-dashed border-fg/20 mt-4"
-              >
-                <Text className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
-                   Access Full Index {'>'}
+          {/* Recent Notes */}
+          {contexts.length > 0 && (
+            <MotiView
+              from={{ opacity: 0, translateY: 16 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'timing', duration: 600, delay: 200 }}
+            >
+              <View className="flex-row justify-between items-baseline mb-6">
+                <Text className="text-lg font-serif text-fg">
+                  Recent notes
                 </Text>
-              </Pressable>
-            </View>
+                <Text className="font-sans text-xs text-fg-muted">
+                  {contexts.length} {contexts.length === 1 ? 'note' : 'notes'}
+                </Text>
+              </View>
+
+              {contexts.slice(0, 5).map((ctx, index) => (
+                <ZenCard
+                  key={ctx.id}
+                  onPress={() => router.push(`/(tabs)/context?id=${ctx.id}` as any)}
+                  title={ctx.title}
+                  label={`${formatDistanceToNow(ctx.createdAt)} ago`}
+                  delay={300 + index * 100}
+                >
+                  <View className="flex-row justify-between items-center mt-2 pt-3 border-t border-border/50">
+                    <Text className="font-sans text-xs text-fg-muted" numberOfLines={1}>
+                      {ctx.notes.substring(0, 60)}{ctx.notes.length > 60 ? '...' : ''}
+                    </Text>
+                    <ChevronRight size={16} color="#9E9890" />
+                  </View>
+                </ZenCard>
+              ))}
+            </MotiView>
           )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          {/* Empty State */}
+          {contexts.length === 0 && (
+            <MotiView
+              from={{ opacity: 0, translateY: 12 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'timing', duration: 600, delay: 300 }}
+              className="py-16 items-center rounded-[16px] border border-dashed border-border bg-surface-warm/50"
+            >
+              <Text className="text-5xl mb-4">🍃</Text>
+              <Text className="font-serif text-lg text-fg mb-2">
+                A quiet space
+              </Text>
+              <Text className="font-sans text-sm text-fg-muted text-center px-8 leading-relaxed">
+                Capture your first thought to get started.{"\n"}Use your voice or write it down.
+              </Text>
+            </MotiView>
+          )}
+        </ScrollView>
+
+        {/* Bottom Action Area */}
+        <MotiView
+          from={{ translateY: 120 }}
+          animate={{ translateY: 0 }}
+          transition={{ type: 'timing', duration: 500, delay: 400 }}
+          className="absolute bottom-0 left-0 right-0 p-6 bg-bg/95 border-t border-border/60"
+          style={{ paddingBottom: 48 }}
+        >
+          <View className="gap-3">
+            <ZenButton
+              onPress={() => router.push('/dump' as any)}
+              title="Start recording"
+              variant="primary"
+              size="lg"
+              fullWidth
+              hapticIntensity="medium"
+              icon={<Mic size={22} color="#FFFFFF" />}
+            />
+            <ZenButton
+              onPress={() => router.push('/manual' as any)}
+              title="Write a note"
+              variant="outline"
+              size="md"
+              fullWidth
+              icon={<PenLine size={18} color="#3D3A36" />}
+            />
+          </View>
+        </MotiView>
+      </SafeAreaView>
+    </View>
   );
 }
