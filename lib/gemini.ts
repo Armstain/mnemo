@@ -1,8 +1,7 @@
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 
-// In a real app, you should use an environment variable (e.g., process.env.EXPO_PUBLIC_GEMINI_API_KEY)
-// For now, I'll set up the structure.
-const GEMINI_API_KEY = "YOUR_API_KEY_HERE"; 
+// Environment variable required: EXPO_PUBLIC_GEMINI_API_KEY
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || ""; 
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
