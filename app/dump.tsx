@@ -72,8 +72,10 @@ export default function DumpScreen() {
 
       // Copy recording to a permanent location so the file survives recorder cleanup.
       const recordingsDir = new Directory(Paths.document, 'recordings');
-      if (!recordingsDir.exists) {
-        recordingsDir.create({ intermediates: true });
+      try {
+        recordingsDir.create({ intermediates: true, idempotent: true });
+      } catch {
+        // Directory already exists — safe to continue.
       }
       const permanentFile = new File(recordingsDir, `recording-${Date.now()}.m4a`);
       new File(tempUri).copy(permanentFile);
@@ -83,7 +85,7 @@ export default function DumpScreen() {
         const base64 = await permanentFile.base64();
         const processed = await processAudioDump(base64, 'audio/m4a');
         // Recording processed successfully — clean up the local copy.
-        if (permanentFile.exists) permanentFile.delete();
+        try { permanentFile.delete(); } catch { /* already deleted — safe to ignore */ }
         const newCtx = addContext({
           title: processed.title,
           notes: processed.notes,

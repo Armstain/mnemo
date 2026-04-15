@@ -33,7 +33,7 @@ export function PendingProcessor() {
             }
             const base64 = await audioFile.base64();
             const processed = await processAudioDump(base64, 'audio/m4a');
-            if (audioFile.exists) audioFile.delete();
+            try { audioFile.delete(); } catch { /* already deleted — safe to ignore */ }
             updateContext(ctx.id, {
               title: processed.title,
               notes: processed.notes,
