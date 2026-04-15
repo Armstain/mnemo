@@ -97,7 +97,7 @@ export default function ContextDetailScreen() {
         }
         const base64 = await audioFile.base64();
         const processed = await processAudioDump(base64, 'audio/m4a');
-        if (audioFile.exists) audioFile.delete();
+        try { audioFile.delete(); } catch { /* already deleted — safe to ignore */ }
         updateContext(context.id, {
           title: processed.title,
           notes: processed.notes,
@@ -147,8 +147,9 @@ export default function ContextDetailScreen() {
     setIsEditing(false);
   };
 
-  const onCopy = async () => {
-    const text = [
+  /** Formats the note as plain text for clipboard / share. */
+  const formatNoteText = () =>
+    [
       context.title,
       '',
       context.summary ? `Summary: ${context.summary.leftOff}` : '',
@@ -157,23 +158,16 @@ export default function ContextDetailScreen() {
     ]
       .filter(Boolean)
       .join('\n');
-    await Clipboard.setStringAsync(text);
+
+  const onCopy = async () => {
+    await Clipboard.setStringAsync(formatNoteText());
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
 
   const onShare = async () => {
     try {
-      const text = [
-        context.title,
-        '',
-        context.summary ? `Summary: ${context.summary.leftOff}` : '',
-        context.notes,
-        context.links.length > 0 ? '\nLinks:\n' + context.links.join('\n') : '',
-      ]
-        .filter(Boolean)
-        .join('\n');
-      await Share.share({ message: text });
+      await Share.share({ message: formatNoteText() });
     } catch (error) {
       console.error(error);
     }
