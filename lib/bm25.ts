@@ -1,14 +1,17 @@
 import { ContextDump } from '@/hooks/use-context-store';
 
-const K1 = 1.5;
-const B = 0.75;
+const K1 = 1.5; // Term frequency saturation — controls how quickly TF effect diminishes
+const B = 0.75;  // Document length normalization — 0 = no length norm, 1 = full length norm
+
+/** Minimum number of characters for a token to be indexed. Excludes noise like "a", "I". */
+const MIN_TOKEN_LENGTH = 2;
 
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .replace(/[^\w\s]/g, ' ')
     .split(/\s+/)
-    .filter((t) => t.length > 1);
+    .filter((t) => t.length >= MIN_TOKEN_LENGTH);
 }
 
 function termFrequency(term: string, tokens: string[]): number {
